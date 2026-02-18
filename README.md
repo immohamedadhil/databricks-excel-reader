@@ -49,7 +49,7 @@ fastexcel
 polars
 ```
 
-## Testing
+## Testing Setup
 
 To test with sample data:
 
