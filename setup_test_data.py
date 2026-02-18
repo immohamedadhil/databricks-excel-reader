@@ -1,9 +1,9 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Setup Test Data
-# MAGIC 
+# MAGIC
 # MAGIC Creates a Delta table with binary Excel content for testing `databricks-excel-reader`.
-# MAGIC 
+# MAGIC
 # MAGIC **Prerequisites:**
 # MAGIC - Unity Catalog Volume access
 # MAGIC - Catalog/schema where you can create tables
@@ -41,12 +41,12 @@ import uuid
 # GENERATE TEST EXCEL FILE
 # =============================================================================
 
-SIZE_CONFIG = {
-    "small":  {"rows": 8_000,   "cols": 135, "expected_mb": 10},
-    "medium": {"rows": 80_000,  "cols": 135, "expected_mb": 100},
-    "large":  {"rows": 400_000, "cols": 135, "expected_mb": 500},
-}
 
+SIZE_CONFIG = {
+    "small":  {"rows": 20_000,   "cols": 135, "expected_mb": 10},
+    "medium": {"rows": 200_000,  "cols": 135, "expected_mb": 100},
+    "large":  {"rows": 1_000_000, "cols": 135, "expected_mb": 500},
+}
 config = SIZE_CONFIG[TEST_SIZE]
 rows, cols = config["rows"], config["cols"]
 
@@ -90,13 +90,26 @@ print(f"DataFrame created: {df.shape}")
 # SAVE TO EXCEL
 # =============================================================================
 
-excel_path = f"{VOLUME_PATH}/test_data_{TEST_SIZE}.xlsx"
-print(f"Writing Excel file to {excel_path}...")
+# Write to local temp first (pandas can't write directly to Volume)
+local_path = f"/tmp/test_data_{TEST_SIZE}.xlsx"
+volume_path = f"{VOLUME_PATH}/test_data_{TEST_SIZE}.xlsx"
 
-df.to_excel(excel_path, sheet_name="result", index=False, engine="openpyxl")
+print(f"Writing Excel file to {local_path}...")
 
-file_size_mb = os.path.getsize(excel_path) / (1024 * 1024)
+# Use context manager to properly close file
+with pd.ExcelWriter(local_path, engine="openpyxl") as writer:
+    df.to_excel(writer, sheet_name="result", index=False)
+
+file_size_mb = os.path.getsize(local_path) / (1024 * 1024)
 print(f"Excel file created: {file_size_mb:.1f} MB")
+
+# Copy to Volume using shutil (works on shared clusters)
+import shutil
+print(f"Copying to {volume_path}...")
+shutil.copy(local_path, volume_path)
+print("Done")
+
+excel_path = volume_path  # Use volume path for next steps
 
 # COMMAND ----------
 
@@ -153,9 +166,9 @@ spark.table(full_table_name).printSchema()
 
 # MAGIC %md
 # MAGIC ## Done!
-# MAGIC 
+# MAGIC
 # MAGIC Now you can test the reader:
-# MAGIC 
+# MAGIC
 # MAGIC ```python
 # MAGIC result_df = read_binary_excel(
 # MAGIC     spark=spark,

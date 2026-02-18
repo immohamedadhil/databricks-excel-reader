@@ -128,6 +128,11 @@ MIT
 databricks-excel-reader/
 ├── README.md
 ├── LICENSE
-├── databricks_excel_reader.py    # Main reader notebook
-└── setup_test_data.py            # Test data generator
+├── databricks_excel_reader.py      # Main solution
+├── setup_test_data.py              # Test data generator
+├── init_script.sh                  # Cluster setup
+└── examples/                       # Comparison approaches
+    ├── pandas_approach.py
+    └── pyspark_approach.py
+    └── new_pyspark_approach.py
 ```
