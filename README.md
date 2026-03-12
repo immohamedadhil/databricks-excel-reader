@@ -1,4 +1,6 @@
-# databricks-excel-reader
+<p align="center">
+  <img src="logo-banner.svg" alt="databricks-excel-reader"/>
+</p>
 
 Read large binary Excel files from Delta tables efficiently on resource-constrained Databricks clusters.
 
